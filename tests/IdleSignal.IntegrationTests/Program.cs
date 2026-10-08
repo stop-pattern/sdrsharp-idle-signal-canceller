@@ -11,6 +11,14 @@ internal static class Program
     {
         var tests = new (string, Action)[]
         {
+            ("actual StartRadio notification enables monitoring from stopped", () =>
+            {
+                var(p,h)=Create(false);try{Find<CheckBox>(p.Gui,"enableCheckBox").Checked=true;h.Playing=true;h.Raise("StartRadio");var x=Stereo(1500);h.Process(x);Assert(x.AsSpan(16000).ToArray().All(v=>v==0),"StartRadio left monitoring disabled");}finally{p.Close();}
+            }),
+            ("actual StopRadio notification bypasses stale mute", () => WithPlugin((p,h,check)=>
+            {
+                check.Checked=true;h.Process(Stereo(1500));h.Playing=false;h.Raise("StopRadio");var x=Stereo(1500);var original=x.ToArray();h.Process(x);Assert(x.SequenceEqual(original),"StopRadio left stale mute");
+            })),
             ("host hook startup bypass", () => WithPlugin((p,h,check) => { var x=Stereo(1500);var original=x.ToArray();h.Process(x);Assert(x.SequenceEqual(original),"startup changed audio");Assert(!check.Checked,"startup checkbox enabled"); })),
             ("host hook mutes both channels", () => WithPlugin((p,h,check) => {check.Checked=true;var x=Stereo(1500);h.Process(x);Assert(x.AsSpan(16000).ToArray().All(v=>v==0),"host tone leaks");})),
             ("GUI disable restores exact samples", () => WithPlugin((p,h,check) => {check.Checked=true;h.Process(Stereo(1500));check.Checked=false;var x=Stereo(1500);var original=x.ToArray();h.Process(x);Assert(x.SequenceEqual(original),"UI bypass failed");})),
@@ -25,9 +33,9 @@ internal static class Program
         int failed=0;foreach(var (name,run) in tests){try {run();Console.WriteLine("PASS "+name);}catch(Exception ex){failed++;Console.WriteLine("FAIL "+name+": "+ex.Message);}}
         Console.WriteLine($"{tests.Length-failed}/{tests.Length} integration tests passed");return failed==0?0:1;
     }
-    static (IdleSignalPlugin, HostProxy) Create()
+    static (IdleSignalPlugin, HostProxy) Create(bool playing=true)
     {
-        var control=DispatchProxy.Create<ISharpControl,HostProxy>();var host=(HostProxy)(object)control;var p=new IdleSignalPlugin();p.Initialize(control);host.Hooks.SetProcessorSampleRate(ProcessorType.FilteredAudioOutput,16000);return(p,host);
+        var control=DispatchProxy.Create<ISharpControl,HostProxy>();var host=(HostProxy)(object)control;host.Playing=playing;var p=new IdleSignalPlugin();p.Initialize(control);host.Hooks.SetProcessorSampleRate(ProcessorType.FilteredAudioOutput,16000);return(p,host);
     }
     static void WithPlugin(Action<IdleSignalPlugin,HostProxy,CheckBox> action){var(p,h)=Create();try{action(p,h,Find<CheckBox>(p.Gui,"enableCheckBox"));}finally{p.Close();}}
     static T Find<T>(Control c,string name) where T:Control => c.Controls.Find(name,true).OfType<T>().Single();

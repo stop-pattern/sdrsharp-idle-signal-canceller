@@ -22,8 +22,8 @@ public sealed class IdleSignalPlugin : ISharpPlugin
     private void HostChanged(object? sender,PropertyChangedEventArgs e)
     {
         var control=_control;var processor=_processor;if(control is null || processor is null)return;
-        if(e.PropertyName is "IsPlaying" or "DetectorType" or null or "") processor.SetStreamState(control.IsPlaying,control.DetectorType);
-        if(e.PropertyName is "Frequency" or "CenterFrequency" or "Source" or "FilterBandwidth" or "AudioSampleRate" or "InputSampleRate") processor.Reset();
+        if(e.PropertyName is "StartRadio" or "StopRadio" or "IsPlaying" or "DetectorType" or null or "") processor.SetStreamState(control.IsPlaying,control.DetectorType);
+        if(e.PropertyName is "Frequency" or "CenterFrequency" or "SourceName" or "Source" or "FilterBandwidth" or "AudioSampleRate" or "InputSampleRate") processor.Reset();
     }
 
     public void Close()
