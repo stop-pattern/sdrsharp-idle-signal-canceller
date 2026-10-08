@@ -13,3 +13,7 @@ vendor/
 *.sigmf-data
 *.cu8
 *.zip
+
+.superpowers/
+local.settings.json
+*.private.*
