@@ -20,7 +20,7 @@ public sealed class ToneDetector
         _frameLength = (int)Math.Round(sampleRate * FrameMs / 1000);
         _toneBins = (int)Math.Ceiling(2 * settings.ToleranceHz / 25) + 1;
         _window = new double[_frameLength];
-        _coefficients = new double[_toneBins + 8];
+        _coefficients = new double[_toneBins + 12];
         _previous = new double[_coefficients.Length];
         _previous2 = new double[_coefficients.Length];
         for (var i = 0; i < _window.Length; i++) _window[i] = .5 - .5 * Math.Cos(2 * Math.PI * i / (_frameLength - 1));
@@ -30,6 +30,11 @@ public sealed class ToneDetector
         {
             var offset = settings.ToleranceHz + 150 + (i % 4) * 50;
             _coefficients[_toneBins + i] = 2 * Math.Cos(2 * Math.PI * (settings.CenterHz + (i < 4 ? -offset : offset)) / sampleRate);
+        }
+        for (var i = 0; i < 4; i++)
+        {
+            var offset = settings.ToleranceHz + 25 + (i % 2) * 25;
+            _coefficients[_toneBins + 8 + i] = 2 * Math.Cos(2 * Math.PI * (settings.CenterHz + (i < 2 ? -offset : offset)) / sampleRate);
         }
     }
 
@@ -56,15 +61,17 @@ public sealed class ToneDetector
 
     private void CompleteFrame()
     {
-        double peak = 0, noise = 0;
+        double peak = 0, noise = 0, outside = 0;
         for (var i = 0; i < _coefficients.Length; i++)
         {
             var power = Math.Max(0, _previous[i] * _previous[i] + _previous2[i] * _previous2[i] - _coefficients[i] * _previous[i] * _previous2[i]);
-            if (i < _toneBins) peak = Math.Max(peak, power); else noise += power;
+            if (i < _toneBins) peak = Math.Max(peak, power);
+            else if (i < _toneBins + 8) noise += power;
+            else outside = Math.Max(outside, power);
         }
         LevelDb = 10 * Math.Log10(Math.Max(1e-10, _energy / _frameLength - Math.Pow(_sum / _frameLength, 2)));
         ProminenceDb = Math.Clamp(10 * Math.Log10(Math.Max(1e-30, peak) / Math.Max(1e-30, noise / 8)), -100, 100);
-        var present = LevelDb >= _settings.MinimumLevelDb && ProminenceDb >= _settings.ThresholdDb - (IsIdle ? 3 : 0);
+        var present = peak > outside * 1.2 && LevelDb >= _settings.MinimumLevelDb && ProminenceDb >= _settings.ThresholdDb - (IsIdle ? 3 : 0);
         if (present)
         {
             _absentMs = 0;

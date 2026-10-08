@@ -1,0 +1,45 @@
+name: Build and test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: dotnet run --project tests/IdleSignal.Tests -c Release
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+  plugin:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Obtain actual SDRSharp host references
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force vendor/host | Out-Null
+          Invoke-WebRequest 'https://airspy.com/downloads/sdrsharp-x64.zip' -OutFile vendor/host.zip
+          Expand-Archive -LiteralPath vendor/host.zip -DestinationPath vendor/host
+          Get-FileHash vendor/host.zip -Algorithm SHA256
+      - name: Build, test and package
+        shell: pwsh
+        run: ./tools/build.ps1 -SdrSharpPath ./vendor/host
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SDRSharp.IdleSignalCanceller-net9
+          path: artifacts/SDRSharp.IdleSignalCanceller-1.0.0.zip
+          if-no-files-found: error

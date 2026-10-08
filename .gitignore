@@ -17,3 +17,4 @@ vendor/
 .superpowers/
 local.settings.json
 *.private.*
+**/__pycache__/
