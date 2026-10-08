@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><AllowUnsafeBlocks>true</AllowUnsafeBlocks></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/SDRSharp.IdleSignalCanceller/SDRSharp.IdleSignalCanceller.csproj" />
+    <Reference Include="SDRSharp.Common"><HintPath>$(SdrSharpDir)/SDRSharp.Common.dll</HintPath></Reference>
+    <Reference Include="SDRSharp.Radio"><HintPath>$(SdrSharpDir)/SDRSharp.Radio.dll</HintPath></Reference>
+    <Reference Include="SDRSharp.PanView"><HintPath>$(SdrSharpDir)/SDRSharp.PanView.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

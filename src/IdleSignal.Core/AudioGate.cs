@@ -26,21 +26,22 @@ public sealed class AudioGate
 
     public void Reset() => Interlocked.Increment(ref _generation);
 
-    public void Process(Span<float> audio)
+    public void Process(Span<float> audio, int channels = 1)
     {
+        if (channels is not (1 or 2) || audio.Length % channels != 0) throw new ArgumentException("Expected mono samples or complete stereo pairs.");
         var generation = Volatile.Read(ref _generation);
         if (_processedGeneration != generation)
         {
             _detector.Reset(); _gain = 1; _processedGeneration = generation;
         }
         if (Volatile.Read(ref _enabled) == 0) return;
-        for (var i = 0; i < audio.Length; i++)
+        for (var i = 0; i < audio.Length; i += channels)
         {
-            var sample = audio[i];
+            var sample = channels == 1 ? audio[i] : (float)(((double)audio[i] + audio[i + 1]) / 2);
             _detector.Push(sample);
-            if (!float.IsFinite(sample)) { audio[i] = 0; _gain = 1; continue; }
+            if (!float.IsFinite(sample)) { for (var c=0;c<channels;c++) audio[i+c] = 0; _gain = 1; continue; }
             _gain = _detector.IsIdle ? Math.Max(0, _gain - _fadeStep) : 1;
-            audio[i] = (float)(sample * _gain);
+            for (var c=0;c<channels;c++) audio[i+c] = (float)(audio[i+c] * _gain);
         }
         Volatile.Write(ref _idle, _detector.IsIdle ? 1 : 0);
         Volatile.Write(ref _prominence, _detector.ProminenceDb);

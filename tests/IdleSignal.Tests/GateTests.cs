@@ -4,6 +4,18 @@ static class GateTests
 {
     public static IEnumerable<(string Name, Action Run)> All()
     {
+        yield return ("stereo 1500 Hz mutes both channels at per-channel rate", () =>
+        {
+            var mono=Tone(1500,16000);var stereo=mono.SelectMany(v=>new[]{v,v}).ToArray();
+            var gate=NewGate();gate.Process(stereo,2);
+            Check(stereo.AsSpan(16000).ToArray().All(v=>v==0),"stereo tone leaks");Check(gate.Snapshot.IsIdle,"stereo frequency interpreted incorrectly");
+        });
+        yield return ("stereo release preserves both channels", () =>
+        {
+            var gate=NewGate();gate.Process(Tone(1500,16000).SelectMany(v=>new[]{v,v}).ToArray(),2);
+            var x=Tone(700,3200).SelectMany(v=>new[]{v,v*.5f}).ToArray();var original=x.ToArray();gate.Process(x,2);
+            Check(x.AsSpan(4000).SequenceEqual(original.AsSpan(4000)),"stereo release alters audio");
+        });
         yield return ("gate mutes stable tone to exact zero", () =>
         {
             var gate = NewGate(); var x = Tone(1500, 16000); gate.Process(x);

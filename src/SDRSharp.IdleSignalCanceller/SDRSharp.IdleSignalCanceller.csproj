@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net9.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><AllowUnsafeBlocks>true</AllowUnsafeBlocks></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../IdleSignal.Core/IdleSignal.Core.csproj" />
+    <Reference Include="SDRSharp.Common"><HintPath>$(SdrSharpDir)/SDRSharp.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SDRSharp.Radio"><HintPath>$(SdrSharpDir)/SDRSharp.Radio.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SDRSharp.PanView"><HintPath>$(SdrSharpDir)/SDRSharp.PanView.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="CheckHostReferences" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(SdrSharpDir)/SDRSharp.Common.dll')" Text="Set SdrSharpDir to actual SDR# DLLs, or run tools/build.ps1 with -SdrSharpPath." />
+  </Target>
+</Project>
