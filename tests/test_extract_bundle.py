@@ -25,18 +25,20 @@ def workspace():
 
 
 class BundleTests(unittest.TestCase):
-    def fixture(self, name="SDRSharp.Common.dll", compressed=False):
+    def fixture(self, name="SDRSharp.Common.dll", compressed=False, include_all=True):
         payload = b"MZ" + b"reference" * 20
         stored = zlib.compress(payload)[2:-4] if compressed else payload
         marker = bytes.fromhex("8b1202b96a612038727b930214d7a03213f5b9e6efae3318ee3b2dce24b36aae")
         offset = 64
-        header = offset + len(stored)
+        names = [name, "SDRSharp.Radio.dll", "SDRSharp.PanView.dll"] if include_all else [name]
+        header = offset + len(stored) * len(names)
         data = bytearray(struct.pack("<q", header) + marker)
         data.extend(bytes(offset - len(data)))
-        data.extend(stored)
-        data.extend(struct.pack("<IIi", 6, 0, 1) + b"\x04test" + bytes(40))
-        encoded = name.encode()
-        data.extend(struct.pack("<qqqB", offset, len(payload), len(stored) if compressed else 0, 1) + bytes([len(encoded)]) + encoded)
+        data.extend(stored * len(names))
+        data.extend(struct.pack("<IIi", 6, 0, len(names)) + b"\x04test" + bytes(40))
+        for index, entry in enumerate(names):
+            encoded = entry.encode()
+            data.extend(struct.pack("<qqqB", offset + index * len(stored), len(payload), len(stored) if compressed else 0, 1) + bytes([len(encoded)]) + encoded)
         return data, payload
 
     def test_extracts_reference_bytes(self):
@@ -51,6 +53,15 @@ class BundleTests(unittest.TestCase):
             root = Path(d); exe = root / "host.exe"; data, _ = self.fixture("../outside.dll"); exe.write_bytes(data)
             with self.assertRaises(ValueError): module.extract(exe, root / "out")
             self.assertFalse((root / "outside.dll").exists())
+
+    def test_missing_reference_cannot_mix_with_previous_host(self):
+        with workspace() as root:
+            out = root / "out"; out.mkdir()
+            for name in ("SDRSharp.Common.dll", "SDRSharp.Radio.dll", "SDRSharp.PanView.dll"):
+                (out / name).write_bytes(b"previous host")
+            exe = root / "incomplete.exe"; exe.write_bytes(self.fixture(include_all=False)[0])
+            with self.assertRaises(ValueError): module.extract(exe, out)
+            self.assertEqual((out / "SDRSharp.Common.dll").read_bytes(), b"previous host")
 
     def test_rejects_non_bundle_and_truncation(self):
         for data in (b"MZ", self.fixture()[0][:-4]):

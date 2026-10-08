@@ -9,6 +9,7 @@ Set-Location -LiteralPath $repoRoot
 $env:DOTNET_CLI_HOME = Join-Path $repoRoot '.dotnet-home'
 $env:DOTNET_NOLOGO = '1'
 $usePythonLauncher = [bool](Get-Command py -ErrorAction SilentlyContinue)
+$referenceDir = $null
 
 if (Test-Path -LiteralPath $source -PathType Container) {
     if (Test-Path -LiteralPath (Join-Path $source 'SDRSharp.Common.dll')) { $referenceDir = $source }
@@ -31,8 +32,11 @@ dotnet "tests/IdleSignal.Tests/bin/$Configuration/net9.0/IdleSignal.Tests.dll"
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
 dotnet "tests/IdleSignal.IntegrationTests/bin/$Configuration/net9.0-windows/IdleSignal.IntegrationTests.dll"
 if ($LASTEXITCODE -ne 0) { throw 'Host integration tests failed' }
-if ($usePythonLauncher) { py -3 -m unittest discover -s tests -p 'test_*.py' -v }
-else { python -m unittest discover -s tests -p 'test_*.py' -v }
+# unittest normally reports success on stderr; Windows PowerShell 5 treats that
+# as NativeCommandError when the build output is redirected. Report on stdout.
+$pythonTests = "import sys,unittest; result=unittest.TextTestRunner(stream=sys.stdout,verbosity=2).run(unittest.defaultTestLoader.discover('tests',pattern='test_*.py'));sys.exit(not result.wasSuccessful())"
+if ($usePythonLauncher) { py -3 -c $pythonTests }
+else { python -c $pythonTests }
 if ($LASTEXITCODE -ne 0) { throw 'Bundle tests failed' }
 
 # New staging directory prevents stale or third-party files entering the archive.

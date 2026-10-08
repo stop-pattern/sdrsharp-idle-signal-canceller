@@ -76,6 +76,9 @@ def extract(source, destination, all_files=False):
             if len(payload) != size:
                 raise ValueError("Bundle size mismatch")
             entries.append((target, payload))
+    extracted_names = {str(target.relative_to(root)) for target, _ in entries}
+    if not all_files and not REFERENCES.issubset(extracted_names):
+        raise ValueError("Bundle is missing required SDRSharp references")
     root.mkdir(parents=True, exist_ok=True)
     for target, payload in entries:
         target.parent.mkdir(parents=True, exist_ok=True)
