@@ -1,6 +1,6 @@
 using IdleSignal.Core;
 
-var tests = new (string Name, Action Run)[]
+var tests = new List<(string Name, Action Run)>
 {
     ("persistent 1500 Hz is idle", () => Check(Detect(1500).IsIdle, "tone not detected")),
     ("lower tolerance endpoint", () => Check(Detect(1450).IsIdle, "1450 not detected")),
@@ -20,13 +20,14 @@ var tests = new (string Name, Action Run)[]
     ("tone end releases", () => { var d = Detect(1500); for (var i=0; i<1600; i++) d.Push(0); Check(!d.IsIdle, "stale mute"); }),
     ("reset clears idle", () => { var d=Detect(1500); d.Reset(); Check(!d.IsIdle, "reset retains mute"); }),
 };
+tests.AddRange(GateTests.All());
 var failures = 0;
 foreach (var (name, run) in tests)
 {
     try { run(); Console.WriteLine("PASS " + name); }
     catch (Exception ex) { failures++; Console.WriteLine("FAIL " + name + ": " + ex.Message); }
 }
-Console.WriteLine($"{tests.Length-failures}/{tests.Length} passed");
+Console.WriteLine($"{tests.Count-failures}/{tests.Count} passed");
 return failures == 0 ? 0 : 1;
 
 static ToneDetector Detect(double frequency, double amplitude = .2, double noise = 0, double seconds = 1)

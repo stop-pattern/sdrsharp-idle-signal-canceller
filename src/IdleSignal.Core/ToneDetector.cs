@@ -74,7 +74,7 @@ public sealed class ToneDetector
         else
         {
             _acquiredMs = 0;
-            _absentMs += FrameMs;
+            _absentMs = Math.Min(_absentMs + FrameMs, _settings.ReleaseMs);
             if (_absentMs >= _settings.ReleaseMs) IsIdle = false;
         }
         ClearFrame();
