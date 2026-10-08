@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.log
+artifacts/
+vendor/
+.dotnet-home/
+.nuget/
+*.wav
+*.sigmf-data
+*.cu8
+*.zip
