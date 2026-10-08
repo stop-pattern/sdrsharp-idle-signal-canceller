@@ -28,39 +28,43 @@
 **Files:** `Directory.Build.props`, `NuGet.Config`, `src/IdleSignal.Core/*.cs`, `tests/IdleSignal.Tests/*`.
 **Interfaces:** `DetectorSettings` immutable validated options; `ToneDetector(double sampleRate, DetectorSettings settings)`; `Push(float sample)` returns whether a frame completed; `IsIdle`, `ProminenceDb`, `LevelDb`, `Reset()`.
 
-- [ ] Write executable tests: pure and noisy 1500 Hz become idle; 1000/2000 Hz, silence, white noise and speech-like mixture do not; tolerance endpoints work; short tone does not latch.
-- [ ] Run `dotnet run --project tests/IdleSignal.Tests -c Release` and confirm missing behavior fails.
-- [ ] Implement 40 ms Hann Goertzel bank and adjacent noise comparison; acquire 160 ms, release 80 ms, configurable thresholds.
-- [ ] Run all tests, inspect anonymous waveform metrics, refine evidence-based defaults and commit.
+- [x] Write executable tests: pure and noisy 1500 Hz become idle; 1000/2000 Hz, silence, white noise and speech-like mixture do not; tolerance endpoints work; short tone does not latch.
+- [x] Run `dotnet run --project tests/IdleSignal.Tests -c Release` and confirm missing behavior fails.
+- [x] Implement 40 ms Hann Goertzel bank and adjacent noise comparison; acquire 160 ms, release 80 ms, configurable thresholds.
+- [x] Run all tests, inspect anonymous waveform metrics, refine evidence-based defaults and commit.
 
 ### Task 2: Audio gate
 
 **Files:** `src/IdleSignal.Core/AudioGate.cs`, `tests/IdleSignal.Tests/GateTests.cs`.
 **Interfaces:** `AudioGate.Process(Span<float>)`, `SetEnabled(bool)`, `Reset()`, `Snapshot`; consumes detector settings and actual sample rate.
 
-- [ ] Tests first: stable tone output is exactly zero; bypass preserves samples; tone disappearance opens audio; disabled/re-enabled streams reset; chunk boundaries produce identical output; NaN does not latch mute.
-- [ ] Observe failures before implementation.
-- [ ] Implement pre-mute detection and 5 ms fade into silence; configuration is applied at buffer boundaries.
-- [ ] Run full suite and commit.
+- [x] Tests first: stable tone output is exactly zero; bypass preserves samples; tone disappearance opens audio; disabled/re-enabled streams reset; chunk boundaries produce identical output; NaN does not latch mute.
+- [x] Observe failures before implementation.
+- [x] Implement pre-mute detection and 5 ms fade into silence; configuration is applied at buffer boundaries.
+- [x] Run full suite and commit.
 
 ### Task 3: SDR# adapter and panel
 
 **Files:** `src/SDRSharp.IdleSignalCanceller/*.cs`, `tests/IdleSignal.IntegrationTests/*`, `tools/extract_bundle.py`.
 **Interfaces:** `IdleSignalPlugin : ISharpPlugin`, `IdleAudioProcessor : IRealProcessor`; register actual verified mono audio hook, expose panel and unregister on Close.
 
-- [ ] Characterize actual host hook layout and lifecycle from local DLL metadata/IL.
-- [ ] Write integration tests against real SDR# interfaces; verify processing, reset on selection/stream changes, GUI startup disabled, UI disable unmutes, repeated close is safe.
-- [ ] Run failing tests, implement adapter and panel with bounded settings, then run full suite and host integration tests.
-- [ ] Build Release against actual host DLLs and commit.
+- [x] Characterize actual host hook layout and lifecycle from local DLL metadata/IL.
+- [x] Write integration tests against real SDR# interfaces; verify processing, reset on selection/stream changes, GUI startup disabled, UI disable unmutes, repeated close is safe.
+- [x] Run failing tests, implement adapter and panel with bounded settings, then run full suite and host integration tests.
+- [x] Build Release against actual host DLLs and commit.
 
 ### Task 4: Evaluation, packaging and CI
 
 **Files:** `tools/build.ps1`, `tools/evaluate_audio.py` or `tools/IdleSignal.Evaluate/*`, `.github/workflows/build.yml`, `README_JA.md`, `docs/validation.md`.
 **Interfaces:** build accepts an external SDR# folder/executable; evaluation accepts explicit WAV paths but writes no source identifiers; package contains plugin, core, documentation only.
 
-- [ ] Evaluate provided WAV with actual detector and verify every fully muted output window is zero; record anonymous metrics.
-- [ ] Exercise synthetic tone→speech→tone through the actual adapter; inspect panel rendering and host loading in a workspace-owned instance if possible.
-- [ ] Add Windows CI that obtains host package, extracts DLLs, builds, tests and uploads only our package.
-- [ ] Run build/packaging locally, inspect ZIP file list, check all tracked content and history for personal paths/identifiers and captured data.
-- [ ] Request one independent whole-branch review, fix important findings with regression tests, rerun checks and commit.
-- [ ] Record exact verified behavior and limitations; deliver local artifacts without push.
+- [x] Evaluate provided WAV with actual detector and verify every fully muted output window is zero; record anonymous metrics.
+- [x] Exercise synthetic tone→speech→tone through the actual adapter; inspect panel rendering and host loading in a workspace-owned instance if possible.
+- [x] Add Windows CI that obtains host package, extracts DLLs, builds, tests and uploads only our package.
+- [x] Run build/packaging locally, inspect ZIP file list, check all tracked content and history for personal paths/identifiers and captured data.
+- [x] Request one independent whole-branch review, fix important findings with regression tests, rerun checks and commit.
+- [x] Record exact verified behavior and limitations; deliver local artifacts without push.
+
+## Completion evidence
+
+Release build: zero warnings/errors. Core 25/25, host integration 12/12, extraction 4/4. Actual MainForm discovered plugin. Stable muted peaks of three supplied stereo waveforms were exactly zero. Independent review findings fixed through regression tests. Live RF, unlabeled speech preservation, x86, and hosted CI remain unverified. No push.

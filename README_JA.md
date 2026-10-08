@@ -59,7 +59,7 @@ Plugins.xmlへの追記は不要です。配置先を本体設定で変更して
 単一EXEも指定できます。Common/Radio/PanViewをGitから除外されたvendor/referencesへ抽出します。
 DLLが分離してある場合は、そのディレクトリを指定します。
 ビルドと全テストが成功すると、artifacts/SDRSharp.IdleSignalCanceller-1.0.0.zipを作成します。
-ZIPにはプラグインの2つのDLLと導入説明だけを含めます。
+ZIPにはプラグインの2つのDLL、導入説明、匿名化した検証資料を含めます。
 
 ```powershell
 dotnet run --project tests/IdleSignal.Tests -c Release

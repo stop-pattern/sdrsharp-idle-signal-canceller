@@ -48,6 +48,11 @@ foreach ($name in @('SDRSharp.IdleSignalCanceller.dll', 'SDRSharp.IdleSignalCanc
     Copy-Item -LiteralPath (Join-Path $pluginOutput $name) -Destination (Join-Path $plugins $name)
 }
 Copy-Item -LiteralPath README_JA.md -Destination (Join-Path $staging 'README_JA.md')
+$docs = Join-Path $staging 'docs'
+New-Item -ItemType Directory -Path $docs -Force | Out-Null
+foreach ($name in @('validation.md', 'reference-findings.md')) {
+    Copy-Item -LiteralPath (Join-Path 'docs' $name) -Destination (Join-Path $docs $name)
+}
 $archive = Join-Path $repoRoot 'artifacts/SDRSharp.IdleSignalCanceller-1.0.0.zip'
 $entries = Get-ChildItem -LiteralPath $staging | ForEach-Object { $_.FullName }
 Compress-Archive -LiteralPath $entries -DestinationPath $archive -Force
